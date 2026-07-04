@@ -8,7 +8,7 @@ from dataclasses import dataclass
 @dataclass(kw_only=True)
 class Configuration:
     """The configurable fields for the chatbot."""
-    username: str = "elonmusk"
+    username: str = "dojo3"
     max_tweet_age_seconds: int = 86400  # 24 hours (24 * 60 * 60 seconds)
 
     @classmethod

@@ -12,6 +12,9 @@ from arcadepy import Arcade
 import chatbot.configuration as configuration
 from chatbot.prompts import CHAT_INSTRUCTIONS
 from chatbot.utils import get_all_tweets
+from langchain_openai import ChatOpenAI
+import tweepy
+from langchain_community.vectorstores import Milvus
 
 def get_tweets(state: MessagesState, config: RunnableConfig, store: BaseStore) -> dict:
     """Fetch and store recent tweets for a specified Twitter user.
@@ -35,42 +38,44 @@ def get_tweets(state: MessagesState, config: RunnableConfig, store: BaseStore) -
     """
 
     # Get the configuration
-    configurable = configuration.Configuration.from_runnable_config(config)
+    # configurable = configuration.Configuration.from_runnable_config(config)
 
-    client = Arcade()  
-    USER_ID = os.environ["ARCADE_USER_ID"]
-    TOOL_NAME = "X.SearchRecentTweetsByUsername"
+    client = tweepy.Client("AAAAAAAAAAAAAAAAAAAAAKqwswEAAAAA8U7jF9PlbCuF9aWqk%2FSRrFPtFLM%3DYi2V7TTiU02SAoyRaiJ51sZLtwepegDyqRhd17RSA6FTjwKs8U")
+    tweets = client.search_recent_tweets(query="from LoshmiOnChain")
+    #client = Arcade()  
+    #USER_ID = os.environ["ARCADE_USER_ID"]
+    #TOOL_NAME = "X.SearchRecentTweetsByUsername"
 
-    auth_response = client.tools.authorize(
-        tool_name=TOOL_NAME,
-        user_id=USER_ID,
-    )
+    # auth_response = client.tools.authorize(
+    #     tool_name=TOOL_NAME,
+    #     user_id=USER_ID,
+    # )
 
-    if auth_response.status != "completed":
-        print(f"Click this link to authorize: {auth_response.authorization_url}")
+    # if auth_response.status != "completed":
+    #     print(f"Click this link to authorize: {auth_response.authorization_url}")
 
     # Wait for the authorization to complete
-    client.auth.wait_for_completion(auth_response)
+    # client.auth.wait_for_completion(auth_response)
 
     # Search for recent tweets (last 7 days) on X (Twitter)
-    username = configurable.username
+    username = 'Allen'
 
     # Get all the tweets
-    tweets = get_all_tweets(client, username, USER_ID, TOOL_NAME)
+    # tweets = get_all_tweets(client, username, USER_ID, TOOL_NAME)
 
     # Load the tweets into memory
     namespace_for_memory = (username, "tweets")
-    for tweet in tweets:
+    for tweet in tweets.data:
         memory_id = tweet.get('id',uuid.uuid4())
         text = tweet.get('text',"Tweet empty")
         url = tweet.get('tweet_url',"URL not found")
         store.put(namespace_for_memory, memory_id, {"text": text,"url": url})
 
 def chat(state: MessagesState, config: RunnableConfig, store: BaseStore) -> dict:
-    """Generate a chat response in the style of a specific Twitter user.
+    """Generate a post content response in the style of a specific Twitter user.
     
     This function retrieves tweets from the store for a given username, formats them,
-    and uses them as context for Claude to generate a response that mimics the user's
+    and uses them as context for Claude to generate a twitter post that mimics the user's
     writing style and personality.
 
     Args:
@@ -102,9 +107,12 @@ def chat(state: MessagesState, config: RunnableConfig, store: BaseStore) -> dict
         formatted_output += "-" * 80 + "\n"
 
     # Generate a response
-    claude_3_5_sonnet = ChatAnthropic(model="claude-3-5-sonnet-20240620", temperature=0.75) 
+    model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
     chat_instructions_formatted = CHAT_INSTRUCTIONS.format(username=username,tweets=formatted_output)
-    msg = claude_3_5_sonnet.invoke([SystemMessage(content=chat_instructions_formatted)]+state['messages'])
+    msg = model.invoke([SystemMessage(content=chat_instructions_formatted)]+state['messages'])
+    # claude_3_5_sonnet = ChatAnthropic(model="claude-3-5-sonnet-20240620", temperature=0.75) 
+    # msg = claude_3_5_sonnet.invoke([SystemMessage(content=chat_instructions_formatted)]+state['messages'])
     return {"messages": [msg]} 
 
 def route_to_tweet_loader(state: MessagesState, config: RunnableConfig, store: BaseStore) -> dict:
