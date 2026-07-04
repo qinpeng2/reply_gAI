@@ -1,3 +1,19 @@
+> **📦 本地备份快照** (2026-07-04)
+>
+> | 项 | 值 |
+> |---|---|
+> | 原路径 | `/opt/workspace/playground/reply_gAI` 和 `dojo3/reply_gAI`（两份重复 clone） |
+> | 上游 | [langchain-ai/reply_gAI](https://github.com/langchain-ai/reply_gAI) |
+> | 改动分支 | `main`（根目录版）、`dojo3`（dojo3 配置版） |
+>
+> ### 分支差异
+> | 分支 | 主要改动 |
+> |------|---------|
+> | `main` | `graph.py` 逻辑调整、`reply_gai.ipynb` 更新、新增 `run.py` 启动脚本 |
+> | `dojo3` | `configuration.py`、`prompts.py`、`graph.py` 的 dojo3 定制配置 |
+>
+> 查看改动：`git checkout main` 或 `git checkout dojo3`
+
 # reply gAI
 
 Reply gAI is an AI clone for any X profile. It automatically collects a user's Tweets, stores them in long-term memory, and uses Retrieval-Augmented Generation (RAG) to generate responses that match their unique writing style and viewpoints.
